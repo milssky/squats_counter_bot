@@ -2,14 +2,14 @@ import asyncio
 import logging
 import sys
 
-from aiogram import Bot, Dispatcher, F, types
+from aiogram import Bot, Dispatcher, F
 from aiogram.filters import CommandStart
 from aiogram.types import Message
 
 from config import TG_TOKEN
 from database.models import Exercise, User
 from database.utils import init
-
+from services import get_amount_for_all_time, get_amount_for_n_days
 
 telegram_bot = Bot(token=TG_TOKEN)
 dp = Dispatcher()
@@ -30,7 +30,7 @@ async def handle_exercise(message: Message) -> None:
     try:
         repetitions = int(message.text)
     except ValueError:
-        logging.info(f"Sent wrong value {message.text}")
+        logging.warning(f"Sent wrong value {message.text}")
         await message.answer("Принимаются только числа, остальное все игнорируется.")
         return
 
@@ -41,7 +41,19 @@ async def handle_exercise(message: Message) -> None:
 
     await Exercise.create(count=repetitions, user=user_instance)
     logging.info(f"User with tg_id {user_instance.telegram_id} create exercise with repetitions {repetitions}")
-    await message.answer("Записано")
+
+    total_repetitions = await get_amount_for_all_time(user_instance)
+    month_repetitions = await get_amount_for_n_days(30, user_instance)
+    week_repetitions = await get_amount_for_n_days(7, user_instance)
+
+    await message.answer(
+        (
+            "Записано.\n"
+            f"За неделю сделано {week_repetitions.total} раз.\n"
+            f"За месяц сделано {month_repetitions.total} раз.\n"
+            f"Всего сделано {total_repetitions.total} раз."
+        )
+    )
 
 
 async def on_startup():
