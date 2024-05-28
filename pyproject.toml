@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "squats-counter-bot"
+version = "0.1.0"
+description = ""
+authors = ["Alexey Potapov <2furius@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+python-dotenv = "^1.0.1"
+tortoise-orm = "^0.21.2"
+aiogram = "^3.6.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
