@@ -4,9 +4,9 @@ import sys
 
 from aiogram import Bot, Dispatcher, F
 from aiogram.filters import CommandStart
-from aiogram.types import Message
+from aiogram.types import Message, Update
 
-from config import TG_TOKEN
+from config import TG_TOKEN, WEBHOOK_URL
 from database.models import Exercise, User
 from database.utils import init
 from services import get_amount_for_all_time, get_amount_for_n_days
@@ -60,6 +60,7 @@ async def on_startup():
     logging.info("Init DB")
     await init()
     logging.info("DB init completed")
+    await telegram_bot.delete_webhook()
 
 
 async def main():
@@ -70,3 +71,6 @@ async def main():
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, stream=sys.stdout)
     asyncio.run(main())
+    # import uvicorn
+    #
+    # uvicorn.run(app, host="127.0.0.1", port=8001)
