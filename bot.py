@@ -4,9 +4,13 @@ import sys
 
 from aiogram import Bot, Dispatcher, F
 from aiogram.filters import CommandStart
-from aiogram.types import Message, Update
+from aiogram.types import Message
+from aiogram.webhook.aiohttp_server import (
+    SimpleRequestHandler,
+)
+from aiohttp import web
 
-from config import TG_TOKEN, WEBHOOK_URL
+from config import POLLING_MODE, SITE_URL, TG_TOKEN, WEBHOOK_URL
 from database.models import Exercise, User
 from database.utils import init
 from services import get_amount_for_all_time, get_amount_for_n_days
@@ -60,17 +64,31 @@ async def on_startup():
     logging.info("Init DB")
     await init()
     logging.info("DB init completed")
-    await telegram_bot.delete_webhook()
+    # await telegram_bot.delete_webhook()
 
 
-async def main():
+async def start_polling():
     await on_startup()
     await dp.start_polling(telegram_bot)
 
 
+async def start_webhook_service():
+    await on_startup()
+    app = web.Application()
+    webhook_request_handler = SimpleRequestHandler(
+        dispatcher=dp,
+        bot=telegram_bot,
+        # secret_token=TG_TOKEN,
+    )
+
+    webhook_request_handler.register(app, path=f"{WEBHOOK_URL}/")
+    await web._run_app(app, host='127.0.0.1', port=8001)
+
+
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, stream=sys.stdout)
-    asyncio.run(main())
-    # import uvicorn
-    #
-    # uvicorn.run(app, host="127.0.0.1", port=8001)
+    print(type(POLLING_MODE), POLLING_MODE)
+    if POLLING_MODE:
+        asyncio.run(start_polling())
+    else:
+        asyncio.run(start_webhook_service())
